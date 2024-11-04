@@ -1,8 +1,8 @@
 import json
 import os
 import numpy as np
-from PIL import Image, ImageDraw
-from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, TextClip, vfx
+from PIL import Image
+from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, TextClip, vfx, AudioFileClip
 
 # Debug mode: Set to True to increase video speed by 40x for quick review
 DEBUG = True
@@ -20,12 +20,13 @@ BLUE = (0, 0, 255)
 ORANGE = (255, 165, 0)
 EXERCISES_DIR = "exercises"
 LOGO_PATH = "logo.webp"  # Update to your logo path
+BEEP_PATH = "beep.mp3"  # Path to your single beep sound file
 
 # Desired screen size (larger than the largest clip)
 SCREEN_WIDTH = 1080
 SCREEN_HEIGHT = 1920
 
-# Helper function to create a countdown screen with logo and visible timer
+# Helper function to create a countdown screen with logo, visible timer, and beeps
 def create_countdown_screen(duration, text, color):
     # Calculate font sizes
     main_font_size = int(SCREEN_HEIGHT * 0.33)  # Countdown font size: 66% of the screen height
@@ -40,6 +41,9 @@ def create_countdown_screen(duration, text, color):
 
     # Create a TextClip for each second of the countdown
     countdown_clips = []
+    beep_audio = AudioFileClip(BEEP_PATH)
+    beeps = []
+
     for t in range(int(duration)):
         countdown_text = f"{int(duration - t)}s"
         countdown_text_clip = TextClip(
@@ -47,9 +51,13 @@ def create_countdown_screen(duration, text, color):
             fontsize=main_font_size,
             color="white",
             align="center"  # Center align the text
-        ).set_duration(1)  # Center the countdown text horizontally and vertically
-        countdown_text_clip.set_position(("center", "center"))
+        ).set_duration(1).set_position(("center", "center"))  # Center the countdown text
+
         countdown_clips.append(countdown_text_clip)
+
+        # Play the beep audio at 3 seconds remaining
+        if duration - t == 3:
+            beeps.append(beep_audio.set_start(t))
 
     # Concatenate the countdown clips into one
     countdown_text_clip = concatenate_videoclips(countdown_clips)
@@ -64,15 +72,15 @@ def create_countdown_screen(duration, text, color):
 
     # Load the logo and create an ImageClip
     logo = Image.open(LOGO_PATH).convert("RGBA")
-    logo = logo.resize((150, 150))  # Resize logo to fit in the corners
+    logo = logo.resize((500, 500))  # Resize logo to fit in the corners
     logo_array = np.array(logo)
-    logo_clip = ImageClip(logo_array).set_position(("right", "top")).set_duration(duration)
+    logo_clip = ImageClip(logo_array).set_position(("center", "center")).set_duration(duration)
 
-    # Combine everything into one clip
+    # Combine everything into one clip, including the beeps
     final_clip = CompositeVideoClip([background_clip, countdown_text_clip, top_text_clip, logo_clip])
-    frame = final_clip.get_frame(10)  # Get the first frame
-    result_image = Image.fromarray(frame)
-    result_image.save(f"test_frame{100}.png")
+    if beeps:
+        final_clip = final_clip.set_audio(beeps[0])  # Use the single beep audio
+
     return final_clip
 
 # Create welcome screen
@@ -112,10 +120,10 @@ demo_clip = concatenate_videoclips(exercise_clips).set_duration(90)
 # Create warmup screen
 warmup_clip = create_countdown_screen(120, "Warm-\nup", BLACK)
 
-# # Create get to your stations screen
-stations_clip = create_countdown_screen(20, "Find\nyour\nzone", ORANGE)
+# Create get to your stations screen
+stations_clip = create_countdown_screen(20, "Get\nready!", ORANGE)
 
-# # Create workout sequence
+# Create workout sequence
 workout_clips = []
 work_intervals = [
     (75, 35), (75, 35), (75, 35), (75, 35),
@@ -149,7 +157,6 @@ final_video = concatenate_videoclips([
     welcome_clip, demo_clip, warmup_clip, stations_clip,
     workout_sequence, cooldown_clip
 ])
-
 
 # Apply debug speed-up if DEBUG is True
 if DEBUG:
