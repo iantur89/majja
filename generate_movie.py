@@ -2,9 +2,9 @@ import json
 import os
 import numpy as np
 from PIL import Image, ImageDraw
-from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, vfx
+from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, TextClip, vfx
 
-# Debug mode: Set to True to increase video speed by 20x for quick review
+# Debug mode: Set to True to increase video speed by 40x for quick review
 DEBUG = True
 
 # Load configuration
@@ -17,28 +17,63 @@ WHITE = (255, 255, 255)
 RED = (234, 4, 4)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+ORANGE = (255, 165, 0)
 EXERCISES_DIR = "exercises"
 LOGO_PATH = "logo.webp"  # Update to your logo path
 
 # Desired screen size (larger than the largest clip)
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+SCREEN_WIDTH = 1080
+SCREEN_HEIGHT = 1920
 
-# Helper function to create a countdown screen with logo
+# Helper function to create a countdown screen with logo and visible timer
 def create_countdown_screen(duration, text, color):
+    # Calculate font sizes
+    main_font_size = int(SCREEN_HEIGHT * 0.33)  # Countdown font size: 66% of the screen height
+    top_font_size = int(SCREEN_HEIGHT * 0.175)  # Top text font size: 12.5% (1/8) of the screen height
+
+    # Create the background screen
     img = Image.new("RGB", (SCREEN_WIDTH, SCREEN_HEIGHT), color)
-    draw = ImageDraw.Draw(img)
-    text_width, text_height = draw.textsize(text)
-    draw.text(((SCREEN_WIDTH - text_width) // 2, (SCREEN_HEIGHT - text_height) // 2), text, fill=WHITE)
     img.save("temp_countdown.png")  # Save the image as a temporary file
 
-    countdown_clip = ImageClip("temp_countdown.png", duration=duration)
+    # Create ImageClip for the background
+    background_clip = ImageClip("temp_countdown.png", duration=duration)
+
+    # Create a TextClip for each second of the countdown
+    countdown_clips = []
+    for t in range(int(duration)):
+        countdown_text = f"{int(duration - t)}s"
+        countdown_text_clip = TextClip(
+            txt=countdown_text,
+            fontsize=main_font_size,
+            color="white",
+            align="center"  # Center align the text
+        ).set_duration(1)  # Center the countdown text horizontally and vertically
+        countdown_text_clip.set_position(("center", "center"))
+        countdown_clips.append(countdown_text_clip)
+
+    # Concatenate the countdown clips into one
+    countdown_text_clip = concatenate_videoclips(countdown_clips)
+
+    # Create a TextClip for the top text
+    top_text_clip = TextClip(
+        txt=text,
+        fontsize=top_font_size,
+        color="white",
+        align="center"  # Center align the top text
+    ).set_position(("right", "bottom")).set_duration(duration)
+
+    # Load the logo and create an ImageClip
     logo = Image.open(LOGO_PATH).convert("RGBA")
     logo = logo.resize((150, 150))  # Resize logo to fit in the corners
     logo_array = np.array(logo)
-
     logo_clip = ImageClip(logo_array).set_position(("right", "top")).set_duration(duration)
-    return CompositeVideoClip([countdown_clip, logo_clip])
+
+    # Combine everything into one clip
+    final_clip = CompositeVideoClip([background_clip, countdown_text_clip, top_text_clip, logo_clip])
+    frame = final_clip.get_frame(10)  # Get the first frame
+    result_image = Image.fromarray(frame)
+    result_image.save(f"test_frame{100}.png")
+    return final_clip
 
 # Create welcome screen
 welcome_text = f"{config['gym_name']} \n {config['date']} \n {config['workout_name']}"
@@ -60,7 +95,7 @@ exercise_duration = 90 / len(exercise_files)
 
 for file in exercise_files:
     file_path = os.path.join(EXERCISES_DIR, file)
-    clip = VideoFileClip(file_path)
+    clip = VideoFileClip(file_path).without_audio()  # Remove the audio from the clip
     if clip.duration < exercise_duration:
         # Loop the clip until it reaches the required duration
         loops = int(exercise_duration // clip.duration) + 1
@@ -75,12 +110,12 @@ for file in exercise_files:
 demo_clip = concatenate_videoclips(exercise_clips).set_duration(90)
 
 # Create warmup screen
-warmup_clip = create_countdown_screen(120, "Warmup", BLACK)
+warmup_clip = create_countdown_screen(120, "Warm-\nup", BLACK)
 
-# Create get to your stations screen
-stations_clip = create_countdown_screen(20, "Get to your stations", BLACK)
+# # Create get to your stations screen
+stations_clip = create_countdown_screen(20, "Find\nyour\nzone", ORANGE)
 
-# Create workout sequence
+# # Create workout sequence
 workout_clips = []
 work_intervals = [
     (75, 35), (75, 35), (75, 35), (75, 35),
@@ -95,14 +130,16 @@ work_intervals = [
 for work, rest in work_intervals:
     work_clip = create_countdown_screen(work, "Work", GREEN)
     workout_clips.append(work_clip)
+    
     if rest > 0:
         rest_clip = create_countdown_screen(rest, "Rest", RED)
         workout_clips.append(rest_clip)
+    else:
+        # If rest time is 0, it's a water break
+        water_break_clip = create_countdown_screen(60, "Water", BLUE)
+        workout_clips.append(water_break_clip)
 
 workout_sequence = concatenate_videoclips(workout_clips)
-
-# Create water break screen
-water_break_clip = create_countdown_screen(60, "Water Break", BLUE)
 
 # Cooldown screen
 cooldown_clip = create_countdown_screen(60, "Great Job!", BLACK)
@@ -110,12 +147,13 @@ cooldown_clip = create_countdown_screen(60, "Great Job!", BLACK)
 # Final video
 final_video = concatenate_videoclips([
     welcome_clip, demo_clip, warmup_clip, stations_clip,
-    workout_sequence, water_break_clip, cooldown_clip
+    workout_sequence, cooldown_clip
 ])
+
 
 # Apply debug speed-up if DEBUG is True
 if DEBUG:
-    final_video = final_video.fx(vfx.speedx, 20)
+    final_video = final_video.fx(vfx.speedx, 100)
 
 # Export video
 final_video.write_videofile("workout_video.mp4", fps=24)
