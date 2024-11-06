@@ -3,7 +3,8 @@ import os
 import sys
 import numpy as np
 from PIL import Image
-from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, TextClip, vfx, AudioFileClip
+from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, CompositeAudioClip, TextClip, vfx, AudioFileClip
+from moviepy.audio.AudioClip import AudioClip, concatenate_audioclips
 
 # Debug mode: Set to True to increase video speed by 40x for quick review
 DEBUG = False
@@ -53,6 +54,8 @@ def create_countdown_screen(duration, text, color, width, height):
     background_clip = ImageClip("temp_countdown.png", duration=duration)
 
     # Create a TextClip for each second of the countdown
+    silence_duration = duration - 3.5
+    silent_clip = AudioClip(lambda t: 0, duration=silence_duration)  # Creates silent audio
     countdown_clips = []
     try:
         beep_audio = AudioFileClip(BEEP_PATH)
@@ -60,11 +63,9 @@ def create_countdown_screen(duration, text, color, width, height):
         print("Error loading beep audio file. Check the file path and format.")
         beep_audio = None  # Fallback in case the audio file cannot be loaded
 
-    # Add beep audio at the last 3.5 seconds
-    beeps = []
-    if beep_audio and duration >= 3.5:
-        beeps.append(beep_audio.set_start(duration - 3.5).set_duration(3.5))
+    full_audio = concatenate_audioclips([silent_clip, beep_audio])
 
+    # Add countdown text clips for each second
     for t in range(int(duration)):
         countdown_text = f"{int(duration - t)}s"
         countdown_text_clip = TextClip(
@@ -73,10 +74,9 @@ def create_countdown_screen(duration, text, color, width, height):
             color="white",
             align="center"
         ).set_duration(1).set_position(("center", "center"))
-
         countdown_clips.append(countdown_text_clip)
 
-    # Concatenate the countdown clips into one
+    # Concatenate countdown clips into one
     countdown_text_clip = concatenate_videoclips(countdown_clips)
 
     # Create a TextClip for the top text
@@ -93,10 +93,13 @@ def create_countdown_screen(duration, text, color, width, height):
     logo_array = np.array(logo)
     logo_clip = ImageClip(logo_array).set_position(("center", "center")).set_duration(duration)
 
-    # Combine everything into one clip, including the beeps
+    # Combine everything into one clip
     final_clip = CompositeVideoClip([background_clip, countdown_text_clip, top_text_clip, logo_clip], size=(width, height))
-    if beeps and not DEBUG:
-        final_clip = final_clip.set_audio(beeps[0])
+    final_clip = final_clip.set_audio(full_audio)
+
+    # Only add beep audio if not in DEBUG mode
+    # if beep_audio and not DEBUG:
+    #     final_clip = final_clip.set_audio(beep_audio.set_start(duration - 3.5))
 
     return final_clip
 
@@ -134,6 +137,10 @@ def create_demo_clip():
 
 # Function to create and export videos
 def create_videos(videos_to_make):
+    LANDSCAPE_WIDTH = 1920
+    LANDSCAPE_HEIGHT = 1080
+    PORTRAIT_WIDTH = 1080
+    PORTRAIT_HEIGHT = 1920
     if "video1" in videos_to_make:
         welcome_clip = create_countdown_screen(15, "Welcome!", BLACK, LANDSCAPE_WIDTH, LANDSCAPE_HEIGHT)
         demo_clip = create_demo_clip()
