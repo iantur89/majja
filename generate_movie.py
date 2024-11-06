@@ -6,7 +6,7 @@ from PIL import Image
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, TextClip, vfx, AudioFileClip
 
 # Debug mode: Set to True to increase video speed by 40x for quick review
-DEBUG = True
+DEBUG = False
 
 # Load configuration
 with open("config.json", "r") as file:
@@ -204,11 +204,11 @@ def create_videos(videos_to_make):
             # Loop the clip to match the total exercise duration
             clip = clip.loop(duration=exercise_duration)
 
-            # Create a label for the exercise
-            label_text = f"{i + 1}: {file.split(') ')[1]}"
+            # Create a label for the exercise with the exercise number and name
+            label_text = f"{i + 1}"
             label_clip = TextClip(
                 txt=label_text,
-                fontsize=24,
+                fontsize=120,
                 color="white",
                 bg_color="black"
             ).set_duration(exercise_duration)
@@ -216,17 +216,34 @@ def create_videos(videos_to_make):
             # Position the label at the top of each cell
             x_pos = (i % cols) * cell_width + (cell_width - clip.size[0]) // 2
             y_pos = (i // cols) * cell_height + (cell_height - clip.size[1]) // 2
-            label_pos = (x_pos, y_pos - 30)  # Adjust to place label above the video
+            label_pos = (x_pos+10, y_pos + 10)  # Adjust to place label above the video
 
-            # Combine the video clip and label
-            exercise_clips.append(CompositeVideoClip([clip.set_position((x_pos, y_pos)), label_clip.set_position(label_pos)]))
+            # Combine the video clip and label into a single composite clip
+            combined_clip = CompositeVideoClip([clip.set_position((x_pos, y_pos)), label_clip.set_position(label_pos)], 
+                                               size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)).set_duration(exercise_duration)
+            exercise_clips.append(combined_clip)
+
+            # Save a sample frame from this clip as a PNG for debugging
+            sample_frame = combined_clip.get_frame(0).astype('uint8')  # Convert to uint8 for compatibility
+            frame_image = Image.fromarray(sample_frame)
+            frame_image.save(f"sample_frame_{i + 1}.png")
 
         # Create the grid of videos
         exercise_grid = CompositeVideoClip(exercise_clips, size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)).set_duration(exercise_duration)
         video4 = exercise_grid
+
+        # Save additional frames at specific intervals if debugging
         if DEBUG:
+            for t in [0, exercise_duration // 3, 2 * exercise_duration // 3, exercise_duration - 1]:
+                debug_frame = exercise_grid.get_frame(t).astype('uint8')  # Convert to uint8 for compatibility
+                debug_image = Image.fromarray(debug_frame)
+                debug_image.save(f"debug_frame_{t}.png")
+
+            # Speed up for quick review
             video4 = video4.fx(vfx.speedx, 40)
+
         video4.write_videofile("video4.mp4", fps=24)
+
 
 
 # Main function to handle CLI arguments
