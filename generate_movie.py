@@ -29,6 +29,16 @@ LANDSCAPE_HEIGHT = 1080
 PORTRAIT_WIDTH = 1080
 PORTRAIT_HEIGHT = 1920
 
+work_intervals = [
+    (75, 35), (75, 35), (75, 35), (75, 35),
+    (75, 35), (75, 35), (75, 35), (75, 35),
+    (60, 0), (60, 30), (60, 30), (60, 30),
+    (60, 30), (60, 30), (60, 30), (60, 30),
+    (60, 0), (45, 25), (45, 25), (45, 25),
+    (45, 25), (45, 25), (45, 25), (45, 25),
+    (60, 0)
+]
+
 # Helper function to create a countdown screen with logo, visible timer, and beeps
 def create_countdown_screen(duration, text, color, width, height):
     # Calculate font sizes
@@ -136,15 +146,6 @@ def create_videos(videos_to_make):
 
     if "video2" in videos_to_make:
         workout_clips = []
-        work_intervals = [
-            (75, 35), (75, 35), (75, 35), (75, 35),
-            (75, 35), (75, 35), (75, 35), (75, 35),
-            (60, 0), (60, 30), (60, 30), (60, 30),
-            (60, 30), (60, 30), (60, 30), (60, 30),
-            (60, 0), (45, 25), (45, 25), (45, 25),
-            (45, 25), (45, 25), (45, 25), (45, 25),
-            (60, 0)
-        ]
         for work, rest in work_intervals:
             work_clip = create_countdown_screen(work, "Work", GREEN, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
             workout_clips.append(work_clip)
@@ -170,8 +171,20 @@ def create_videos(videos_to_make):
         video3.write_videofile("video3.mp4", fps=24)
 
     if "video4" in videos_to_make:
-        exercise_duration = workout_sequence.duration
-        exercise_files = [
+        # Calculate the total duration of the workout sequence
+        exercise_duration = sum(work + rest for work, rest in work_intervals)
+
+        # Set up the portrait orientation
+        PORTRAIT_WIDTH = 1080
+        PORTRAIT_HEIGHT = 1920
+
+        # Grid layout: 4 rows, 2 columns
+        rows, cols = 4, 2
+        cell_width = PORTRAIT_WIDTH // cols
+        cell_height = PORTRAIT_HEIGHT // rows
+
+        exercise_clips = []
+        for i, file in enumerate([
             "(1) Hip Escape.mp4",
             "(2) Slamball Over the Shoulder.mp4",
             "(3) Russian Kettlebell Swing.mp4",
@@ -180,16 +193,41 @@ def create_videos(videos_to_make):
             "(6) Burpee Sprawl.mp4",
             "(7) Med Ball Russian Twist.mp4",
             "(8) Bear Crawl mp4.mp4"
-        ]
-        exercise_clips = [
-            VideoFileClip(os.path.join(EXERCISES_DIR, file)).without_audio().set_position(("center", "center"))
-            for file in exercise_files
-        ]
-        exercise_grid = CompositeVideoClip(exercise_clips, size=(LANDSCAPE_WIDTH, LANDSCAPE_HEIGHT)).set_duration(exercise_duration)
+        ]):
+            file_path = os.path.join(EXERCISES_DIR, file)
+            clip = VideoFileClip(file_path).without_audio()
+
+            # Calculate the scaling factor to maintain aspect ratio
+            scale_factor = min(cell_width / clip.size[0], cell_height / clip.size[1])
+            clip = clip.resize(scale_factor)
+
+            # Loop the clip to match the total exercise duration
+            clip = clip.loop(duration=exercise_duration)
+
+            # Create a label for the exercise
+            label_text = f"{i + 1}: {file.split(') ')[1]}"
+            label_clip = TextClip(
+                txt=label_text,
+                fontsize=24,
+                color="white",
+                bg_color="black"
+            ).set_duration(exercise_duration)
+
+            # Position the label at the top of each cell
+            x_pos = (i % cols) * cell_width + (cell_width - clip.size[0]) // 2
+            y_pos = (i // cols) * cell_height + (cell_height - clip.size[1]) // 2
+            label_pos = (x_pos, y_pos - 30)  # Adjust to place label above the video
+
+            # Combine the video clip and label
+            exercise_clips.append(CompositeVideoClip([clip.set_position((x_pos, y_pos)), label_clip.set_position(label_pos)]))
+
+        # Create the grid of videos
+        exercise_grid = CompositeVideoClip(exercise_clips, size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)).set_duration(exercise_duration)
         video4 = exercise_grid
         if DEBUG:
             video4 = video4.fx(vfx.speedx, 40)
         video4.write_videofile("video4.mp4", fps=24)
+
 
 # Main function to handle CLI arguments
 if __name__ == "__main__":
