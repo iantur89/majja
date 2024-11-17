@@ -3,6 +3,10 @@ import os
 import sys
 import numpy as np
 from PIL import Image
+from moviepy.config import change_settings
+
+change_settings({"IMAGEMAGICK_BINARY": r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"})
+
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, CompositeAudioClip, TextClip, vfx, AudioFileClip
 from moviepy.audio.AudioClip import AudioClip, concatenate_audioclips
 import subprocess
@@ -121,14 +125,14 @@ def create_countdown_screen(duration, text, color, width, height):
 # Function to create the demo clip with exercise videos
 def create_demo_clip():
     exercise_files = [
-        "(1) Hip Escape.mp4",
-        "(2) Slamball Over the Shoulder.mp4",
-        "(3) Russian Kettlebell Swing.mp4",
-        "(4) Sit Through.mp4",
-        "(5) Med Ball Oblique Slams.mp4",
-        "(6) Burpee Sprawl.mp4",
-        "(7) Med Ball Russian Twist.mp4",
-        "(8) Bear Crawl mp4.mp4"
+        "V Ups 1.mp4",
+        "Med Ball Thrusters.mp4",
+        "Sit Throughs.mp4",  # This exercise file was not present, please ensure the file is available.
+        "Squat Jumps.mp4",
+        "Glute Bridge.mp4",
+        "Allegator Pushups 1.mp4",  # Note: The filename contains 'Allegator' instead of 'Alligator'.
+        "KB Upright Row.mp4",
+        "JumpRope.mp4"
     ]
     exercise_clips = []
     exercise_duration = 90 / len(exercise_files)

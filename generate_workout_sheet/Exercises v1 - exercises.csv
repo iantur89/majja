@@ -1,0 +1,25 @@
+Ex Name,Description,Push (Chest),Pull (Back),Shoulders,Push (Quads),Pull (Hamstrings),Calves,Core,Cardio,Anaerobic,Aerobic,Plyometric,Strength,isolation,compound
+Aligator Pushups,"Perform a pushup while moving laterally, resembling an alligator's crawl.",TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE
+Banded Rows,Pull resistance bands towards you while maintaining a stable core for a back workout.,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE
+Banded Military Press,Press resistance bands overhead while standing to target the shoulders.,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE
+Goblet Squat,"Hold a weight at chest level and squat down, maintaining an upright torso.",FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE,TRUE
+Med Balls Good Mornings,"Hold a medicine ball and hinge at the hips, keeping your back flat to target the hamstrings.",FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE,TRUE
+Standing Calf Raises,Rise onto the balls of your feet to strengthen your calves.,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE
+Sit Throughs,"From a bear crawl position, kick one leg through to the opposite side, rotating your body.",FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE
+High Knees,Run in place while lifting your knees up to hip level.,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,FALSE
+Med Ball Push Ups,Perform pushups with hands on a medicine ball for added core and stability work.,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE
+KB Alternating Row,"Perform a bent-over row with a kettlebell, alternating sides.",FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE
+KB Upright Row,Pull a kettlebell vertically to your chest while keeping elbows high.,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE
+Reverse Lunges,Step backward into a lunge position and return to standing for each rep.,FALSE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE,TRUE
+KB Sumo Deadlifts,"Stand with feet wide apart and lift a kettlebell from the ground, focusing on glutes and hamstrings.",FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE,TRUE
+JumpRope,Jump continuously over a rotating rope to improve cardiovascular fitness.,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE
+Russian Twists,"Sit with feet elevated and twist from side to side, holding a weight for core strength.",FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE
+Burpees,"Drop into a pushup, then jump explosively up from a standing position.",TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE
+American KB Swing,Swing a kettlebell overhead while using your hips to generate power.,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE
+Med Ball Thrusters,Hold a medicine ball and perform a squat-to-overhead press in one movement.,FALSE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE
+Dead Ball over shoulder throw,Lift a heavy sandbag and throw it over your shoulder for explosive power.,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE
+Squat Jumps,"Perform a squat, then jump explosively, landing softly back into a squat.",FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE
+V Ups,Lie flat and raise your hands and feet simultaneously to touch above your core.,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE
+Double Unders,Jump rope with two rotations per jump for increased intensity.,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE,TRUE,FALSE,FALSE,FALSE
+Bear Crawl Four Corners,"Crawl on hands and feet, navigating around a set of four corners for coordination.",FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE
+Glute Bridge,Lie on your back and raise your hips to strengthen glutes and hamstrings.,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE
