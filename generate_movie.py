@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip, CompositeVideoClip, CompositeAudioClip, TextClip, vfx, AudioFileClip
 from moviepy.audio.AudioClip import AudioClip, concatenate_audioclips
+import subprocess
 
 # Debug mode: Set to True to increase video speed by 40x for quick review
 DEBUG = False
@@ -39,6 +40,20 @@ work_intervals = [
     (45, 25), (45, 25), (45, 25), (45, 25),
     (60, 0)
 ]
+
+# Function to call FFmpeg for looping the video
+def loop_video_with_ffmpeg(input_path, output_path, duration):
+    # Construct the FFmpeg command to loop the video and trim to the desired duration
+    command = [
+        "ffmpeg",
+        "-stream_loop", "-1",  # Loop indefinitely
+        "-i", input_path,
+        "-t", str(duration),  # Trim to the desired duration
+        "-c", "copy",  # Copy codec to avoid re-encoding
+        output_path
+    ]
+    # Run the command
+    subprocess.run(command, check=True)
 
 # Helper function to create a countdown screen with logo, visible timer, and beeps
 def create_countdown_screen(duration, text, color, width, height):
@@ -154,15 +169,15 @@ def create_videos(videos_to_make):
     if "video2" in videos_to_make:
         workout_clips = []
         for work, rest in work_intervals:
-            work_clip = create_countdown_screen(work, "Work", GREEN, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
-            workout_clips.append(work_clip)
-            
-            if rest > 0:
-                rest_clip = create_countdown_screen(rest, "Rest", RED, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
-                workout_clips.append(rest_clip)
-            else:
+
+            if rest == 0:
                 water_break_clip = create_countdown_screen(60, "Water", BLUE, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
                 workout_clips.append(water_break_clip)
+            else: 
+                work_clip = create_countdown_screen(work, "Work", GREEN, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
+                workout_clips.append(work_clip)
+                rest_clip = create_countdown_screen(rest, "Rest", RED, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
+                workout_clips.append(rest_clip)
         
         workout_sequence = concatenate_videoclips(workout_clips)
         video2 = workout_sequence
@@ -190,8 +205,7 @@ def create_videos(videos_to_make):
         cell_width = PORTRAIT_WIDTH // cols
         cell_height = PORTRAIT_HEIGHT // rows
 
-        exercise_clips = []
-        for i, file in enumerate([
+        exercise_files = [
             "(1) Hip Escape.mp4",
             "(2) Slamball Over the Shoulder.mp4",
             "(3) Russian Kettlebell Swing.mp4",
@@ -200,58 +214,59 @@ def create_videos(videos_to_make):
             "(6) Burpee Sprawl.mp4",
             "(7) Med Ball Russian Twist.mp4",
             "(8) Bear Crawl mp4.mp4"
-        ]):
+        ]
+
+        # Load all exercise clips and find the maximum duration
+        exercise_clips = []
+        max_duration = 0
+        for i, file in enumerate(exercise_files):
             file_path = os.path.join(EXERCISES_DIR, file)
             clip = VideoFileClip(file_path).without_audio()
+            exercise_clips.append(clip)
+            if clip.duration > max_duration:
+                max_duration = clip.duration
 
+        # Adjust all clips to have the same duration as the longest clip
+        adjusted_clips = []
+        for i, clip in enumerate(exercise_clips):
             # Calculate the scaling factor to maintain aspect ratio
             scale_factor = min(cell_width / clip.size[0], cell_height / clip.size[1])
-            clip = clip.resize(scale_factor)
+            resized_clip = clip.resize(scale_factor)
 
-            # Loop the clip to match the total exercise duration
-            clip = clip.loop(duration=exercise_duration)
+            # Slow down the clip to match the max_duration
+            if clip.duration < max_duration:
+                speed_factor = clip.duration / max_duration
+                adjusted_clip = resized_clip.fx(vfx.speedx, speed_factor)
+            else:
+                adjusted_clip = resized_clip
 
-            # Create a label for the exercise with the exercise number and name
+            # Create a label for the exercise with the exercise number
             label_text = f"{i + 1}"
             label_clip = TextClip(
                 txt=label_text,
                 fontsize=120,
                 color="white",
                 bg_color="black"
-            ).set_duration(exercise_duration)
+            ).set_duration(max_duration)
 
-            # Position the label at the top of each cell
-            x_pos = (i % cols) * cell_width + (cell_width - clip.size[0]) // 2
-            y_pos = (i // cols) * cell_height + (cell_height - clip.size[1]) // 2
-            label_pos = (x_pos+10, y_pos + 10)  # Adjust to place label above the video
+            # Position the label at the top-left of each cell
+            x_pos = (i % cols) * cell_width + 10  # 10 pixels padding from the left
+            y_pos = (i // cols) * cell_height + 10  # 10 pixels padding from the top
+            video_pos = (x_pos, y_pos + 130)  # Position video below the label
 
             # Combine the video clip and label into a single composite clip
-            combined_clip = CompositeVideoClip([clip.set_position((x_pos, y_pos)), label_clip.set_position(label_pos)], 
-                                               size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)).set_duration(exercise_duration)
-            exercise_clips.append(combined_clip)
+            combined_clip = CompositeVideoClip(
+                [adjusted_clip.set_position(video_pos), label_clip.set_position((x_pos, y_pos))],
+                size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
+            ).set_duration(max_duration)
 
-            # Save a sample frame from this clip as a PNG for debugging
-            sample_frame = combined_clip.get_frame(0).astype('uint8')  # Convert to uint8 for compatibility
-            frame_image = Image.fromarray(sample_frame)
-            frame_image.save(f"sample_frame_{i + 1}.png")
+            adjusted_clips.append(combined_clip)
 
         # Create the grid of videos
-        exercise_grid = CompositeVideoClip(exercise_clips, size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)).set_duration(exercise_duration)
-        video4 = exercise_grid
+        exercise_grid = CompositeVideoClip(adjusted_clips, size=(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)).set_duration(max_duration)
 
-        # Save additional frames at specific intervals if debugging
-        if DEBUG:
-            for t in [0, exercise_duration // 3, 2 * exercise_duration // 3, exercise_duration - 1]:
-                debug_frame = exercise_grid.get_frame(t).astype('uint8')  # Convert to uint8 for compatibility
-                debug_image = Image.fromarray(debug_frame)
-                debug_image.save(f"debug_frame_{t}.png")
-
-            # Speed up for quick review
-            video4 = video4.fx(vfx.speedx, 40)
-
-        video4.write_videofile("video4.mp4", fps=24)
-
-
+        exercise_grid.write_videofile("exercise_grid.mp4", fps=24)
+        loop_video_with_ffmpeg("exercise_grid.mp4", "video4.mp4", exercise_duration)
 
 # Main function to handle CLI arguments
 if __name__ == "__main__":
